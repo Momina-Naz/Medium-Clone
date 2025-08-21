@@ -1,12 +1,5 @@
 <template>
   <div class="max-w-3xl mx-auto mt-10">
-    <NuxtLink :to="`/reading`"
-      ><button
-        class="px-4 py-1 mr-2 mb-2 rounded font-semibod text-gray-900 border border-gray-400"
-      >
-        Back to readings
-      </button></NuxtLink
-    >
     <input
       v-model="title"
       type="text"

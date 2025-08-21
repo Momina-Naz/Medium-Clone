@@ -19,7 +19,6 @@ export const useAuthStore = defineStore("auth", {
     loadAuthFromStorage() {
       const token = localStorage.getItem("token");
       const user = localStorage.getItem("user");
-
       if (token && user) {
         this.token = token;
         this.user = JSON.parse(user);
@@ -35,10 +34,10 @@ export const useAuthStore = defineStore("auth", {
   },
 });
 
-// ✅ Auto-load user/token when store is first used
+// helper to initialize store from storage
 export const useInitAuth = () => {
   const store = useAuthStore();
-  if (!store.user && localStorage.getItem("user")) {
+  if (!store.token && localStorage.getItem("token")) {
     store.loadAuthFromStorage();
   }
   return store;

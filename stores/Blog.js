@@ -4,12 +4,15 @@ import { useAuthStore } from "./Auth";
 
 export const useBlogStore = defineStore("blog", {
   state: () => ({
-    blogs: [], // always initialize as array
+    blogs: [], // All blogs from API
+    filteredBlogs: [], // Blogs after search
+    myBlogs: [], // Only my blogs
     loading: false,
     error: null,
   }),
 
   actions: {
+    // Fetch all blogs
     async fetchBlogs() {
       const nuxtApp = useNuxtApp();
       this.loading = true;
@@ -21,6 +24,7 @@ export const useBlogStore = defineStore("blog", {
         this.blogs = Array.isArray(response.data.data.blogs)
           ? response.data.data.blogs
           : [];
+        this.filteredBlogs = [...this.blogs];
       } catch (err) {
         this.error = err.response?.data?.message || err.message;
       } finally {
@@ -28,6 +32,36 @@ export const useBlogStore = defineStore("blog", {
       }
     },
 
+    // Fetch my blogs
+    async fetchMyBlogs() {
+      const nuxtApp = useNuxtApp();
+      const authStore = useAuthStore();
+      const token = authStore.token;
+
+      if (!token) {
+        this.error = "You must be logged in to see your blogs.";
+        return;
+      }
+
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const response = await nuxtApp.$api.get("api/v1/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        this.myBlogs = Array.isArray(response.data.blogs)
+          ? response.data.blogs
+          : [];
+      } catch (err) {
+        this.error = err.response?.data?.message || err.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Create a new blog
     async createBlog(title, content) {
       const nuxtApp = useNuxtApp();
       const authStore = useAuthStore();
@@ -35,7 +69,6 @@ export const useBlogStore = defineStore("blog", {
 
       if (!token) {
         this.error = "You must be logged in to create a blog.";
-        console.error(this.error);
         return;
       }
 
@@ -46,26 +79,25 @@ export const useBlogStore = defineStore("blog", {
         const response = await nuxtApp.$api.post(
           "api/v1/blogs",
           { title, content },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const newBlog = response.data.data || response.data;
 
-        // Ensure blogs is an array before pushing
         if (!Array.isArray(this.blogs)) this.blogs = [];
         this.blogs.push(newBlog);
+        this.filteredBlogs = [...this.blogs];
 
-        console.log("Blog created:", newBlog);
+        if (!Array.isArray(this.myBlogs)) this.myBlogs = [];
+        this.myBlogs.push(newBlog);
       } catch (err) {
         this.error = err.response?.data?.message || err.message;
-        console.error("Error creating blog:", this.error);
       } finally {
         this.loading = false;
       }
     },
 
+    // Delete blog
     async deleteBlog(blogId) {
       const nuxtApp = useNuxtApp();
       const authStore = useAuthStore();
@@ -73,7 +105,6 @@ export const useBlogStore = defineStore("blog", {
 
       if (!token) {
         this.error = "You must be logged in to delete a blog.";
-        console.error(this.error);
         return;
       }
 
@@ -85,16 +116,27 @@ export const useBlogStore = defineStore("blog", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (Array.isArray(this.blogs)) {
-          this.blogs = this.blogs.filter((b) => b._id !== blogId);
-        }
-
-        console.log("Blog deleted:", blogId);
+        this.blogs = this.blogs.filter((b) => b._id !== blogId);
+        this.filteredBlogs = [...this.blogs];
+        this.myBlogs = this.myBlogs.filter((b) => b._id !== blogId);
       } catch (err) {
         this.error = err.response?.data?.message || err.message;
-        console.error("Error deleting blog:", this.error);
       } finally {
         this.loading = false;
+      }
+    },
+
+    // Search
+    searchBlogs(query) {
+      if (!query) {
+        this.filteredBlogs = [...this.blogs];
+      } else {
+        const lowerQuery = query.toLowerCase();
+        this.filteredBlogs = this.blogs.filter(
+          (blog) =>
+            blog.title?.toLowerCase().includes(lowerQuery) ||
+            blog.content?.toLowerCase().includes(lowerQuery)
+        );
       }
     },
   },

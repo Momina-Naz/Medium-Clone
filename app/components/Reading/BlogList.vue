@@ -27,34 +27,12 @@
             <p class="text-sm text-gray-500">
               {{ new Date(blog.createdAt).toLocaleDateString() }}
             </p>
-
-            <!-- Delete Button (only if user is the author) -->
-            <div
-              v-if="
-                authStore.user &&
-                blog.author &&
-                blog.author._id === authStore.user.id
-              "
-              class="mt-4 flex flex-col gap-2"
-            >
-              <p class="text-xs text-green-600 font-medium">
-                You are the author of this blog, so you can delete it if you
-                want.
-              </p>
-
-              <span
-                @click="confirmDelete(blog._id)"
-                class="material-icons text-red-900"
-                >delete</span
-              >
-            </div>
           </div>
         </div>
       </div>
     </div>
   </main>
 </template>
-
 <script setup>
 import { onMounted, computed } from "vue";
 import { useBlogStore } from "~~/stores/blog";
@@ -64,22 +42,14 @@ import { useAuthStore } from "~~/stores/Auth";
 const blogStore = useBlogStore();
 const authStore = useAuthStore();
 
-// blogs
-const blogs = computed(() => blogStore.blogs);
+// Use filteredBlogs to reflect search results
+const blogs = computed(() => blogStore.filteredBlogs);
 
 // Load data
 onMounted(() => {
   authStore.loadAuthFromStorage();
   blogStore.fetchBlogs();
 });
-
-// confirm delete function
-const confirmDelete = (id) => {
-  if (confirm(" Are you sure you want to delete this blog?")) {
-    blogStore.deleteBlog(id);
-    alert("🗑 Blog deleted successfully!");
-  }
-};
 </script>
 
 

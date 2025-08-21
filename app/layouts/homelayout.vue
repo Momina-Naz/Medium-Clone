@@ -1,6 +1,6 @@
 <template>
   <main
-    class="flex flex-col md:flex-row md:justify-between items-center bg-[#F7F4ED] border-b border-[#242424] py-6 px-2 sm:px-40 leading-relaxed"
+    class="flex flex-col lg:flex-row lg:justify-between items-center bg-[#F7F4ED] border-b border-[#242424] py-6 px-1 md:px-40 leading-relaxed"
   >
     <NuxtLink :to="`/`">
       <h1 class="text-3xl text-[#242424] font-bold font-serif tracking-tight">
@@ -24,7 +24,9 @@
   </main>
 
   <!-- Hero Section emit handling -->
-  <NuxtPage><Hero @open-signup="isModalopen = true" /></NuxtPage>
+  <ClientOnly>
+    <Hero v-if="!token" @open-signup="isModalopen = true" />
+  </ClientOnly>
 
   <!-- SignUp Modal -->
   <Teleport to="body">
